@@ -198,11 +198,11 @@
   when: cluster_created is failed
 
 - name: CLUSTER RESET SOFT
-  command: /usr/local/bin/redis-cli -p {{redis_port}} CLUSTER RESET SOFT
+  command: /usr/local/bin/redis-cli -p {{ redis_port }} CLUSTER RESET SOFT
   when: (redis_cluster_exists is failed) and (cluster_created is failed)
 
 - name: CLUSTER FLUSH ALL
-  command: /usr/local/bin/redis-cli -p {{redis_port}} FLUSHALL
+  command: /usr/local/bin/redis-cli -p {{ redis_port }} FLUSHALL
   when: (redis_cluster_exists is failed) and (cluster_created is failed)
 
 - name: Creating redis cluster 1
