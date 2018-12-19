@@ -46,7 +46,7 @@
     creates: "/usr/local/rvm/gems/ruby-{{ ruby_version }}"
   environment:
     PATH: "{{ rvm_path }}"
-  when: redis_ruby_list_exists.stdout != ruby_version  
+  when: redis_ruby_list_exists.stdout != ruby_version
 
 - name: Set default version of ruby with rvm
   command: "rvm use {{ ruby_version }} --default"
