@@ -33,7 +33,7 @@
   when: redis_ruby_exists.stdout != '1'
 
 - name: Check if Ensure that ruby is installed
-  shell: rvm list |grep ruby |cut -d '-' -f2 | cut -d ' ' -f1
+  shell: rvm list |grep ruby |cut -d '-' -f2 | cut -d ' ' -f1 | head -1
   register: redis_ruby_list_exists
   environment:
     PATH: "{{ rvm_path }}"
