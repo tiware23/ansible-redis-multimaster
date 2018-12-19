@@ -9,6 +9,7 @@
       - curl
       - gnupg2
       - which
+      - iproute
     state: present
 
 - name: Ensure that GPG key for RVM is installed
