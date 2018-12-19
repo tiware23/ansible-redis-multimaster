@@ -46,18 +46,13 @@
     creates: "/usr/local/rvm/gems/ruby-{{ ruby_version }}"
   environment:
     PATH: "{{ rvm_path }}"
-  when: redis_ruby_list_exists.stdout != ruby_version
-
-- name: Register for ruby version
-  shell: "rvm list |grep '{{ ruby_version }}' | awk '{print $2}'"
-  register: return_rvm_defatult
-  changed_when: false
+  when: redis_ruby_list_exists.stdout != ruby_version  
 
 - name: Set default version of ruby with rvm
   command: "rvm use {{ ruby_version }} --default"
   environment:
     PATH: "{{ rvm_path }}"
-  when: return_rvm_default.stdout != "ruby-{{ ruby_version }}"
+  when: redis_ruby_list_exists.stdout != ruby_version
 
 - name: Use default version of ruby with rvm
   command: "rvm alias create default ruby-{{ ruby_version }}"
