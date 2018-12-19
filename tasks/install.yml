@@ -20,6 +20,7 @@
   shell: ls /tmp/ruby-rvm.sh | wc -l
   register: redis_ruby_exists
   ignore_errors: true
+  changed_when: false
 
 - name: Get ruby rpm
   get_url:
@@ -37,6 +38,7 @@
   environment:
     PATH: "{{ rvm_path }}"
   ignore_errors: true
+  changed_when: false
 
 - name: Ensure that ruby is installed
   command: "rvm install {{ ruby_version }}"
@@ -46,10 +48,16 @@
     PATH: "{{ rvm_path }}"
   when: redis_ruby_list_exists.stdout != ruby_version
 
+- name: Register for ruby version
+  shell: "rvm list |grep '{{ ruby_version }}' | awk '{print $2}'"
+  register: return_rvm_defatult
+  changed_when: false
+
 - name: Set default version of ruby with rvm
   command: "rvm use {{ ruby_version }} --default"
   environment:
     PATH: "{{ rvm_path }}"
+  register: return_rvm_default.stdout == "ruby-{{ ruby_version }}"
 
 - name: Use default version of ruby with rvm
   command: "rvm alias create default ruby-{{ ruby_version }}"
@@ -68,6 +76,7 @@
 - name: Register for unarchive
   shell: "ls -l /opt/redis-{{ redis_version }} | wc -l"
   register: return_output
+  changed_when: false
 
 - name: Download and Unarchive a Redis package
   unarchive:
@@ -81,6 +90,7 @@
   shell: ls /tmp/ruby-rvm.sh | wc -l
   register: redis_ruby_exists
   ignore_errors: true
+  changed_when: false
 
 - name: Building redis
   command: make -C /opt/redis-{{ redis_version }}
@@ -178,6 +188,7 @@
   command: grep -q slave /var/lib/redis/nodes.conf
   register: redis_cluster_exists
   ignore_errors: true
+  changed_when: false
 
 - name: Creating redis cluster
   command: >
