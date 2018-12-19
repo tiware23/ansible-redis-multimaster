@@ -2,7 +2,7 @@
 - name: Converge
   hosts: all
   roles:
-    - role: ansible-redis-cluster-multiserver
+    - role: ansible-redis-multimaster
   vars:
     redis_node01: test-molecule-redis-01
     redis_node02: test-molecule-redis-02

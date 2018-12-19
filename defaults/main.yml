@@ -7,7 +7,9 @@ redis_node04:
 redis_node05:
 redis_node06:
 ruby_version: "2.5.3"
-rvm_path: "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/rvm/bin:/root/bin:/usr/local/rvm/rubies/ruby-{{ ruby_version }}/bin/"
+os_path_version: "/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin"
+ruby_path: "/usr/local/rvm/rubies/ruby-{{ ruby_version }}/bin/"
+rvm_path: "{{ os_path_version }}:/usr/local/rvm/bin:/root/bin:{{ ruby_path }}"
 redis_version: "5.0.3"
 redis_port: "6379"
 

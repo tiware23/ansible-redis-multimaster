@@ -180,7 +180,15 @@
   ignore_errors: true
 
 - name: Creating redis cluster
-  command: ruby /opt/redis-{{ redis_version }}/src/redis-trib.rb create --replicas 1 {{ redis_node01 }}:{{ redis_port }} {{ redis_node02 }}:{{ redis_port }} {{ redis_node03 }}:{{ redis_port }} {{ redis_node04 }}:{{ redis_port }} {{ redis_node05 }}:{{ redis_port }} {{ redis_node06 }}:{{ redis_port }}
+  command: >
+        ruby /opt/redis-{{ redis_version }}/src/redis-trib.rb create
+        --replicas 1
+        {{ redis_node01 }}:{{ redis_port }}
+        {{ redis_node02 }}:{{ redis_port }}
+        {{ redis_node03 }}:{{ redis_port }}
+        {{ redis_node04 }}:{{ redis_port }}
+        {{ redis_node05 }}:{{ redis_port }}
+        {{ redis_node06 }}:{{ redis_port }}
   when: redis_cluster_exists is failed
   run_once: true
   register: cluster_created
