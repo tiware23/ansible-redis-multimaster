@@ -57,7 +57,7 @@
   command: "rvm use {{ ruby_version }} --default"
   environment:
     PATH: "{{ rvm_path }}"
-  register: return_rvm_default.stdout == "ruby-{{ ruby_version }}"
+  when: return_rvm_default.stdout != "ruby-{{ ruby_version }}"
 
 - name: Use default version of ruby with rvm
   command: "rvm alias create default ruby-{{ ruby_version }}"
