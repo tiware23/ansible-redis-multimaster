@@ -1,0 +1,7 @@
+ruby /opt/redis-{{ redis_version }}/src/redis-trib.rb create --replicas 1 \
+$(host {{ redis_node01 }}| awk '{print $4}'):{{redis_port}} \
+$(host {{redis_node02}}| awk '{print $4}'):{{redis_port}} \
+$(host {{redis_node03}}| awk '{print $4}'):{{redis_port}} \
+$(host {{redis_node04}}| awk '{print $4}'):{{redis_port}} \
+$(host {{redis_node05}}| awk '{print $4}'):{{redis_port}} \
+$(host {{redis_node06}}| awk '{print $4}'):{{redis_port}}

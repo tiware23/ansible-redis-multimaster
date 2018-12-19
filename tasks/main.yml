@@ -1,0 +1,4 @@
+---
+# tasks file for ansible-redis-cluster-multserver
+- name: Include install.yml
+  include: install.yml

@@ -1,0 +1,79 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: docker
+  network:
+    - name: redis-docker-network
+      driver: bridge
+lint:
+  name: yamllint
+platforms:
+  - name: test-molecule-redis-01
+    image: centos:7.6.1810
+    privileged: true
+    command: '/lib/systemd/systemd'
+    networks:
+      - name: "redis-docker-network"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    network_mode: redis-docker-network
+  - name: test-molecule-redis-02
+    image: centos:7.6.1810
+    privileged: true
+    command: '/lib/systemd/systemd'
+    networks:
+      - name: "redis-docker-network"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    network_mode: redis-docker-network
+  - name: test-molecule-redis-03
+    image: centos:7.6.1810
+    privileged: true
+    command: '/lib/systemd/systemd'
+    networks:
+      - name: "redis-docker-network"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    network_mode: redis-docker-network
+  - name: test-molecule-redis-04
+    image: centos:7.6.1810
+    privileged: true
+    command: '/lib/systemd/systemd'
+    networks:
+      - name: "redis-docker-network"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    network_mode: redis-docker-network
+  - name: test-molecule-redis-05
+    image: centos:7.6.1810
+    privileged: true
+    command: '/lib/systemd/systemd'
+    networks:
+      - name: "redis-docker-network"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    network_mode: redis-docker-network
+  - name: test-molecule-redis-06
+    image: centos:7.6.1810
+    privileged: true
+    command: '/lib/systemd/systemd'
+    networks:
+      - name: "redis-docker-network"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    network_mode: redis-docker-network
+provisioner:
+  name: ansible
+  lint:
+    name: ansible-lint
+    options:
+      exclude:
+        - ../tasks/install.yml
+      x: ["ANSIBLE0011,ANSIBLE0012"]
+scenario:
+  name: default
+verifier:
+  name: testinfra
+  lint:
+    name: flake8

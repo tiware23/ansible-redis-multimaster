@@ -1,0 +1,213 @@
+---
+- name: Installing redis dependencies
+  yum:
+    name:
+      - make
+      - gcc
+      - tcl.x86_64
+      - bind-utils
+      - curl
+      - gnupg2
+      - which
+    state: present
+
+- name: Ensure that GPG key for RVM is installed
+  command: gpg2 --keyserver hkp://keys.gnupg.net:80 --recv-keys D39DC0E3
+  args:
+    creates: /root/.gnupg/secring.gpg
+
+- name: Check if Ruby exists
+  shell: ls /tmp/ruby-rvm.sh | wc -l
+  register: redis_ruby_exists
+  ignore_errors: true
+
+- name: Get ruby rpm
+  get_url:
+    url: https://get.rvm.io
+    dest: /tmp/ruby-rvm.sh
+    mode: 0755
+
+- name: Install Ruby {{ ruby_version }}
+  command: bash /tmp/ruby-rvm.sh
+  when: redis_ruby_exists.stdout != '1'
+
+- name: Check if Ensure that ruby is installed
+  shell: rvm list |grep ruby |cut -d '-' -f2 | cut -d ' ' -f1
+  register: redis_ruby_list_exists
+  environment:
+    PATH: "{{ rvm_path }}"
+  ignore_errors: true
+
+- name: Ensure that ruby is installed
+  command: "rvm install {{ ruby_version }}"
+  args:
+    creates: "/usr/local/rvm/gems/ruby-{{ ruby_version }}"
+  environment:
+    PATH: "{{ rvm_path }}"
+  when: redis_ruby_list_exists.stdout != ruby_version
+
+- name: Set default version of ruby with rvm
+  command: "rvm use {{ ruby_version }} --default"
+  environment:
+    PATH: "{{ rvm_path }}"
+
+- name: Use default version of ruby with rvm
+  command: "rvm alias create default ruby-{{ ruby_version }}"
+  args:
+    creates: /usr/local/rvm/config/alias
+  environment:
+    PATH: "{{ rvm_path }}"
+
+- name: Installing ruby's module for redis
+  gem:
+    name: redis
+    state: present
+  environment:
+    PATH: "{{ rvm_path }}"
+
+- name: Register for unarchive
+  shell: "ls -l /opt/redis-{{ redis_version }} | wc -l"
+  register: return_output
+
+- name: Download and Unarchive a Redis package
+  unarchive:
+    src: http://download.redis.io/releases/redis-{{ redis_version }}.tar.gz
+    dest: "/opt/"
+    creates: redis-{{ redis_version }}
+    remote_src: true
+  when: return_output.stdout == "0"
+
+- name: Check if Ruby
+  shell: ls /tmp/ruby-rvm.sh | wc -l
+  register: redis_ruby_exists
+  ignore_errors: true
+
+- name: Building redis
+  command: make -C /opt/redis-{{ redis_version }}
+  args:
+    creates: /opt/redis-{{ redis_version }}/src/redis-server
+
+- name: Creating redis user
+  user:
+    name: redis
+    createhome: false
+
+- name: Creating redis config directory
+  file:
+    path: /etc/redis
+    state: directory
+    mode: 0755
+    owner: redis
+    group: redis
+
+- name: Creating redis log directory
+  file:
+    path: /var/log/redis
+    state: directory
+    mode: 0755
+    owner: redis
+    group: redis
+
+- name: Creating redis data directory
+  file:
+    path: /var/lib/redis
+    state: directory
+    mode: 0755
+    owner: redis
+    group: redis
+
+
+- name: Copying redis binaries
+  copy:
+    src: /opt/redis-{{ redis_version }}/src/{{ item }}
+    dest: /usr/local/bin/{{ item }}
+    remote_src: true
+    mode: 0755
+  with_items:
+    - redis-server
+    - redis-cli
+
+- name: Editing rc.local
+  template:
+    src: templates/rc.local.j2
+    dest: /etc/rc.d/rc.local
+    mode: 0755
+
+- name: Creating redis config
+  template:
+    src: templates/redis.conf.j2
+    dest: /etc/redis/redis.conf
+    mode: 0644
+  with_items: "{{ redis_auth }}"
+
+- name: Creating redis systemd file
+  template:
+    src: templates/redis.service.j2
+    dest: /etc/systemd/system/redis.service
+
+- name: Creating sysconfig file
+  template:
+    src: templates/sysctl.conf.j2
+    dest: /etc/sysctl.conf
+
+- name: Configuring kernel overcommit_memory parameters
+  sysctl:
+    name: vm.overcommit_memory
+    value: 1
+    state: present
+
+- name: Configuring kernel somaxcoon parameters
+  sysctl:
+    name: net.core.somaxconn
+    value: 65535
+    state: present
+
+- name: Starting and enabling redis
+  systemd:
+    daemon_reload: true
+    name: redis
+    state: started
+    enabled: true
+
+- name: Update redis-trib
+  template:
+    src: templates/redis-trib.rb.j2
+    dest: /opt/redis-{{ redis_version }}/src/redis-trib.rb
+
+- name: Check if redis cluster exists
+  command: grep -q slave /var/lib/redis/nodes.conf
+  register: redis_cluster_exists
+  ignore_errors: true
+
+- name: Creating redis cluster
+  command: ruby /opt/redis-{{ redis_version }}/src/redis-trib.rb create --replicas 1 {{ redis_node01 }}:{{redis_port}} {{ redis_node02 }}:{{redis_port}} {{ redis_node03 }}:{{redis_port}} {{ redis_node04 }}:{{redis_port}} {{ redis_node05 }}:{{redis_port}} {{ redis_node06 }}:{{redis_port}}
+  when: redis_cluster_exists is failed
+  run_once: true
+  register: cluster_created
+  ignore_errors: true
+  environment:
+    PATH: "{{ rvm_path }}"
+
+- name: Create redis cluster script
+  template:
+    src: templates/create-cluster.sh.j2
+    dest: /etc/redis/create-cluster.sh
+    mode: 0755
+    owner: redis
+    group: redis
+  when: cluster_created is failed
+
+- name: CLUSTER RESET SOFT
+  command: /usr/local/bin/redis-cli -p {{redis_port}} CLUSTER RESET SOFT
+  when: (redis_cluster_exists is failed) and (cluster_created is failed)
+
+- name: CLUSTER FLUSH ALL
+  command: /usr/local/bin/redis-cli -p {{redis_port}} FLUSHALL
+  when: (redis_cluster_exists is failed) and (cluster_created is failed)
+
+- name: Creating redis cluster 1
+  command: bash /etc/redis/create-cluster.sh
+  when: (redis_cluster_exists is failed) and (cluster_created is failed)
+  run_once: true
+  environment:
+    PATH: "{{ rvm_path }}"

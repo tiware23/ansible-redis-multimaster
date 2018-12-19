@@ -1,0 +1,15 @@
+port {{redis_port}}
+cluster-enabled yes
+cluster-config-file nodes.conf
+cluster-node-timeout 5000
+{% if item.auth is defined and item.auth %}
+requirepass {{ item.pass }}
+masterauth {{ item.pass }}
+{% endif %}
+appendonly no
+supervised systemd
+daemonize yes
+dir /var/lib/redis
+protected-mode no
+pidfile /var/run/redis.pid
+logfile /var/log/redis/redis.log
