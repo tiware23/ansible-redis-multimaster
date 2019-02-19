@@ -62,6 +62,11 @@
   environment:
     PATH: "{{ rvm_path }}"
 
+- name: Removed Old Rubygem's old versions
+  yum:
+    name: rubygems
+    state: absent
+    
 - name: Installing ruby's module for redis
   gem:
     name: redis
